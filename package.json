@@ -1,0 +1,16 @@
+{
+  "name": "ruby-china-server",
+  "version": "0.0.1",
+  "main": "index.js",
+  "repository": "https://github.com/project-nexus/ruby-china-server",
+  "author": "vincent178 <vh7157@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "fastify": "^1.5.0",
+    "fastify-reply-from": "^0.4.2"
+  },
+  "devDependencies": {}
+}
