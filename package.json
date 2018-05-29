@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "fastify": "^1.5.0",
+    "fastify-cookie": "^2.0.1",
     "fastify-reply-from": "^0.4.2"
   },
   "devDependencies": {
