@@ -29,11 +29,11 @@ proxy.post('/oauth/token', (request, reply) => {
     }, 
     onResponse: (res) => {
       parseResponse(reply, res, (data) => {
-        reply.header('Set-Cookie', [
-          `access_token=${data.access_token}; Expires=${cookieExpires(data.created_at, data.expires_in)}; HttpOnly;`,
-          `refresh_token=${data.refresh_token}; Expires=${cookieExpires(data.created_at)}; HttpOnly;`
-        ])
-        reply.send(body)
+        const cookies = []
+        cookies.push(generateCookieString('access_token', data.access_token, data.created_at+data.expires_in-10*60))
+        cookies.push(generateCookieString('refresh_token', data.refresh_token, data.created_at+30*24*60*60))
+        reply.header('Set-Cookie', cookies)
+        reply.send(data)
       })
     }
   })
@@ -51,20 +51,11 @@ proxy.listen(4000, (err) => {
   if (err) throw err
 })
 
-// unixTimestamp, default expires is 30 days  
-function cookieExpires(unixTimestamp, expiresIn) {
-  if (expiresIn) {
-    return new Date((unixTimestamp+expiresIn-10*60)*1000).toUTCString()
-  } else {
-    return new Date((unixTimestamp+30*24*60*60)*1000).toUTCString()
-  }
-}
-
-function setCookie(key, value, expires) {
+function generateCookieString(key, value, expires) {
   if (typeof expires === 'number') {
     expires = new Date(expires*1000).toUTCString()
   }
-  return `${key}=${value}; Expires=${expires}; HttpOnly;`
+  return `${key}=${value}; Expires=${expires}; Path=/; HttpOnly;`
 }
 
 function parseResponse(reply, response, fn) {
