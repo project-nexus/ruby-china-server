@@ -20,7 +20,6 @@ proxy.register(require('fastify-reply-from'), {
 })
 
 proxy.post('/oauth/token', (request, reply) => {
-
   reply.from('/oauth/token', {
     body: {
       ...request.body,
@@ -28,13 +27,12 @@ proxy.post('/oauth/token', (request, reply) => {
       client_secret: config.RubyChina.client_secret
     }, 
     onResponse: (res) => {
-      parseResponse(reply, res, data => {
+      reply.send(res) // this will only be fired when the res stream ended
+      parseResponse(res, data => {
         const cookies = []
         cookies.push(generateCookieString('access_token', data.access_token, data.created_at+data.expires_in-10*60))
         cookies.push(generateCookieString('refresh_token', data.refresh_token, data.created_at+30*24*60*60))
-        copyHeaders(reply.headers, reply)
         reply.header('Set-Cookie', cookies)
-        reply.send(res)
       })
     }
   })
@@ -59,7 +57,7 @@ function generateCookieString(key, value, expires) {
   return `${key}=${value}; Expires=${expires}; Path=/; HttpOnly;`
 }
 
-function parseResponse(reply, response, fn) {
+function parseResponse(response, fn) {
   const encoding = response.headers['content-encoding']
   const bufs = []
 
@@ -91,22 +89,6 @@ function parseResponse(reply, response, fn) {
     if (err) throw err
   }
 }
-
-function copyHeaders(headers, reply) {
-  const headersKeys = Object.keys(headers)
-
-  var header
-  var i
-
-  for (i = 0; i < headersKeys.length; i++) {
-    header = headersKeys[i]
-    if (header.charCodeAt(0) !== 58) {
-      reply.header(header, headers[header])
-    }
-  }
-}
-
-
 
 
 
