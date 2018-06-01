@@ -27,12 +27,14 @@ proxy.post('/oauth/token', (request, reply) => {
       client_secret: config.RubyChina.client_secret
     }, 
     onResponse: (res) => {
-      reply.send(res) // this will only be fired when the res stream ended
-      parseResponse(res, data => {
+      parseResponse(res, (data, body) => {
         const cookies = []
         cookies.push(generateCookieString('access_token', data.access_token, data.created_at+data.expires_in-10*60))
         cookies.push(generateCookieString('refresh_token', data.refresh_token, data.created_at+30*24*60*60))
+        copyHeaders(res.headers, reply)
+        delete reply._headers['transfer-encoding']
         reply.header('Set-Cookie', cookies)
+        reply.send(body)
       })
     }
   })
@@ -77,11 +79,11 @@ function parseResponse(response, fn) {
       zlib.unzip(body, (err, buf) => {
         if (err) throw err
         const data = JSON.parse(buf.toString())
-        fn(data)
+        fn(data, body)
      })
     } else {
       const data = JSON.parse(body.toString())
-      fn(data)
+      fn(data, body)
     }
   }
 
@@ -92,3 +94,16 @@ function parseResponse(response, fn) {
 
 
 
+function copyHeaders(headers, reply) {
+  const headersKeys = Object.keys(headers)
+
+  var header
+  var i
+
+  for (i = 0; i < headersKeys.length; i++) {
+    header = headersKeys[i]
+    if (header.charCodeAt(0) !== 58 && header !== 'transfer-encoding') {
+      reply.header(header, headers[header])
+    }
+  }
+}
