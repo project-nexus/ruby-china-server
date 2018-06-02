@@ -41,11 +41,15 @@ proxy.post('/oauth/token', (request, reply) => {
 })
 
 proxy.all('/*', (request, reply) => {
-  reply.from(request.req.url, {
-    queryString: {
-      access_token: req.cookies.access_token
-    }
-  })
+  let url = request.req.url
+  const tokenString = querystring.stringify({access_token: request.cookies.access_token})
+  if (request.req.url.search) {
+    url += '&' + tokenString
+  } else {
+    url += '?' + tokenString
+  }
+
+  reply.from(url)
 })
 
 proxy.listen(4000, (err) => {
